@@ -164,7 +164,20 @@ document.addEventListener('DOMContentLoaded', () => {
   initHeaderProfile();
   initGlobalSearch();
   setTodayDate();
+  checkExistingSession();
 });
+
+function checkExistingSession() {
+  try {
+    const savedUser = sessionStorage.getItem('kanchkura_current_user');
+    if (savedUser) {
+      App.currentUser = JSON.parse(savedUser);
+      loginSuccess(true);
+    }
+  } catch (e) {
+    console.warn('Session restore failed:', e);
+  }
+}
 
 function setTodayDate() {
   const today = new Date().toISOString().split('T')[0];
@@ -217,17 +230,26 @@ function setTheme(theme) {
 function initLoginForm() {
   document.getElementById('loginForm').addEventListener('submit', (e) => {
     e.preventDefault();
-    const email = document.getElementById('loginEmail').value;
-    const password = document.getElementById('loginPassword').value;
-    const role = document.getElementById('loginRole').value;
+    const email = (document.getElementById('loginEmail').value || '').trim();
+    const password = (document.getElementById('loginPassword').value || '').trim();
+    const role = (document.getElementById('loginRole')?.value || '').trim();
 
-    const user = DB.users.find(u => u.email === email && u.password === password && u.role === role);
+    // Match by email and password (case-insensitive email)
+    let user = DB.users.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
+
+    // Fallback if role was also provided
+    if (!user && role) {
+      user = DB.users.find(u => u.role === role && u.password === password);
+    }
+
     if (user) {
       App.currentUser = user;
-      // Show 2FA modal (simulated)
-      document.getElementById('twoFactorModal').classList.remove('hidden');
+      try {
+        sessionStorage.setItem('kanchkura_current_user', JSON.stringify(user));
+      } catch (err) {}
+      loginSuccess(false);
     } else {
-      showToast('Invalid credentials. Please try again.', 'error');
+      showToast('Invalid email or password. Please try again.', 'error');
     }
   });
 
@@ -253,26 +275,62 @@ function initLoginForm() {
   });
 }
 
+function quickLogin(email, password, role) {
+  const emailInput = document.getElementById('loginEmail');
+  const passInput = document.getElementById('loginPassword');
+  const roleInput = document.getElementById('loginRole');
+  if (emailInput) emailInput.value = email;
+  if (passInput) passInput.value = password;
+  if (roleInput && role) roleInput.value = role;
+
+  let user = DB.users.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
+  if (!user && role) {
+    user = DB.users.find(u => u.role === role);
+  }
+
+  if (user) {
+    App.currentUser = user;
+    try {
+      sessionStorage.setItem('kanchkura_current_user', JSON.stringify(user));
+    } catch (err) {}
+    loginSuccess(false);
+  }
+}
+
 function verify2FA() {
   const inputs = document.querySelectorAll('.otp-input');
   const code = Array.from(inputs).map(i => i.value).join('');
   if (code.length < 6) { showToast('Please enter the complete 6-digit code.', 'warning'); return; }
   closeModal('twoFactorModal');
-  loginSuccess();
+  loginSuccess(false);
 }
 
-function loginSuccess() {
-  updateUserUI();
-  showView('loginPage');
-  document.getElementById('loginPage').classList.add('hidden');
+function loginSuccess(silent = false) {
+  if (!App.currentUser) return;
+
+  // Hide all login / auth overlays
+  const appPages = ['loginPage', 'forgotPasswordPage', 'resetPasswordPage', 'sessionTimeoutPage', 'unauthorizedPage'];
+  appPages.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.add('hidden');
+  });
+  const twoFa = document.getElementById('twoFactorModal');
+  if (twoFa) twoFa.classList.add('hidden');
+
   document.getElementById('mainApp').classList.remove('hidden');
+  updateUserUI();
   navigateTo('dashboard');
-  showToast(`Welcome back, ${App.currentUser.name}!`, 'success');
+  if (!silent) {
+    showToast(`Welcome back, ${App.currentUser.name}!`, 'success');
+  }
   startSessionTimer();
 }
 
 function logout() {
   App.currentUser = null;
+  try {
+    sessionStorage.removeItem('kanchkura_current_user');
+  } catch (err) {}
   document.getElementById('mainApp').classList.add('hidden');
   document.getElementById('loginPage').classList.remove('hidden');
   document.getElementById('loginEmail').value = '';

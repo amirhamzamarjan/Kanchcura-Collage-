@@ -64,6 +64,16 @@
                     <span>Sign In</span>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                 </button>
+
+                <div class="demo-accounts" style="margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.15);">
+                    <p style="font-size: 0.8125rem; color: var(--text-secondary); margin-bottom: 0.6rem; text-align: center; font-weight: 500;">⚡ Quick Demo Login (১-ক্লিক লগইন):</p>
+                    <div style="display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: center;">
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="quickLogin('admin@kanchkura.edu.bd', 'admin123', 'super-admin')">Admin</button>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="quickLogin('principal@kanchkura.edu.bd', 'principal123', 'principal')">Principal</button>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="quickLogin('accounts@kanchkura.edu.bd', 'account123', 'accounts')">Accounts</button>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="quickLogin('fatema@kanchkura.edu.bd', 'teacher123', 'teacher')">Teacher</button>
+                    </div>
+                </div>
             </form>
             <div class="login-footer">
                 <p>🔒 Secured by Kanchkura College IT Department</p>
