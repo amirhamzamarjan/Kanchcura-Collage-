@@ -47,15 +47,11 @@ app.use(express.static(rootDir));
 app.use('/api/v1', require('./routes'));
 
 // ============================================
-// ROOT ROUTE
+// ROOT & SPA ROUTE
 // ============================================
 app.get('/', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Kanchkura College ERP API',
-    version: '1.0.0',
-    documentation: '/api/v1/health',
-  });
+  const indexPath = path.join(rootDir, 'index.html');
+  res.sendFile(indexPath);
 });
 
 // ============================================

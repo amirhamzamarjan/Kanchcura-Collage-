@@ -8,15 +8,22 @@ const dbUser = process.env.DB_USER || 'root';
 const dbPassword = process.env.DB_PASSWORD !== undefined && process.env.DB_PASSWORD !== '' ? process.env.DB_PASSWORD : null;
 const dbName = process.env.DB_NAME || 'kanchkura_college';
 
+let isDbConnected = false;
+
 const ensureDatabaseExists = async () => {
-  const connection = await mysql.createConnection({
-    host: dbHost === 'localhost' ? '127.0.0.1' : dbHost,
-    port: dbPort,
-    user: dbUser,
-    password: dbPassword || '',
-  });
-  await connection.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`);
-  await connection.end();
+  try {
+    const connection = await mysql.createConnection({
+      host: dbHost === 'localhost' ? '127.0.0.1' : dbHost,
+      port: dbPort,
+      user: dbUser,
+      password: dbPassword || '',
+      connectTimeout: 5000,
+    });
+    await connection.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`);
+    await connection.end();
+  } catch (err) {
+    // Non-fatal, let Sequelize handle authenticate
+  }
 };
 
 const sequelize = new Sequelize(
@@ -31,7 +38,7 @@ const sequelize = new Sequelize(
     pool: {
       max: 10,
       min: 0,
-      acquire: 30000,
+      acquire: 10000,
       idle: 10000,
     },
     define: {
@@ -51,16 +58,17 @@ const connectDB = async () => {
     await ensureDatabaseExists();
 
     await sequelize.authenticate();
+    isDbConnected = true;
     console.log('✅ MySQL Database connected successfully.');
 
-    if (process.env.NODE_ENV === 'development') {
-      await sequelize.sync({ alter: false });
-      console.log('✅ Database synced.');
-    }
+    await sequelize.sync({ alter: false });
+    console.log('✅ Database models synced.');
+    return true;
   } catch (error) {
-    console.error('❌ Database connection failed:', error.message);
-    process.exit(1);
+    isDbConnected = false;
+    console.warn(`⚠️ MySQL Database not connected (${error.message}). Running in Standalone UI Mode.`);
+    return false;
   }
 };
 
-module.exports = { sequelize, connectDB, ensureDatabaseExists, Sequelize };
+module.exports = { sequelize, connectDB, ensureDatabaseExists, isDbConnected, Sequelize };

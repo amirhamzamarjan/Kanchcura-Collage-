@@ -6,18 +6,22 @@ const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
   try {
-    // Connect to MySQL
+    // Try to connect to MySQL (non-blocking)
     await connectDB();
+  } catch (dbErr) {
+    console.warn('Database connection warning:', dbErr.message);
+  }
 
-    // Start server
+  // Start Express server regardless so it serves the app
+  try {
     const server = app.listen(PORT, () => {
       console.log(`
 ╔══════════════════════════════════════════════╗
 ║     KANCHKURA COLLEGE ERP SYSTEM            ║
 ║     Version   : 1.0.0                        ║
-║     Port      : ${String(PORT).padEnd(33)}║
-║     Mode      : ${process.env.NODE_ENV?.padEnd(7) || 'development'.padEnd(7)}                    ║
-║     API       : http://localhost:${PORT}/api/v1        ║
+║     Port      : ${String(PORT).padEnd(29)}║
+║     Mode      : ${(process.env.NODE_ENV || 'production').padEnd(29)}║
+║     Status    : Live & Ready                 ║
 ╚══════════════════════════════════════════════╝
       `);
     });
