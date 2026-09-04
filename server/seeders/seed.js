@@ -1,6 +1,6 @@
 require('dotenv').config();
 const bcrypt = require('bcryptjs');
-const { sequelize } = require('../config/database');
+const { sequelize, ensureDatabaseExists } = require('../config/database');
 const {
   User, Department, Group, Section, Class, Subject,
   Student, StudentSubject, Teacher, Fee, Setting,
@@ -9,6 +9,12 @@ const {
 const seed = async () => {
   try {
     console.log('🌱 Seeding Kanchkura College ERP Database...\n');
+
+    // Create database if not exists
+    if (ensureDatabaseExists) {
+      await ensureDatabaseExists();
+      console.log('✅ Database verified/created.');
+    }
 
     // Sync all tables first
     await sequelize.sync({ force: true });

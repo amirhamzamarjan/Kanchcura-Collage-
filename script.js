@@ -130,9 +130,33 @@ const DB = {
 };
 
 // ============================================
+// LOCAL STORAGE PERSISTENCE
+// ============================================
+function saveDB() {
+  try {
+    localStorage.setItem('kanchkura_college_db', JSON.stringify(DB));
+  } catch (e) {
+    console.warn('Could not save to localStorage', e);
+  }
+}
+
+function loadDB() {
+  try {
+    const saved = localStorage.getItem('kanchkura_college_db');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      Object.assign(DB, parsed);
+    }
+  } catch (e) {
+    console.warn('Could not load from localStorage', e);
+  }
+}
+
+// ============================================
 // 3. INITIALIZATION
 // ============================================
 document.addEventListener('DOMContentLoaded', () => {
+  loadDB();
   initTheme();
   initLoginForm();
   initOTPInputs();
@@ -792,6 +816,7 @@ function saveStudent() {
   closeModal('addStudentModal');
   document.getElementById('studentForm').reset();
   document.getElementById('editStudentId').value = '';
+  saveDB();
   renderStudentsTable();
 }
 
@@ -958,6 +983,7 @@ function saveAttendance() {
     }
   });
 
+  saveDB();
   showToast('Attendance saved successfully!', 'success');
   document.getElementById('attendanceTableContainer').style.display = 'none';
   renderAttendanceSummary();
@@ -1052,6 +1078,7 @@ function saveSingleResult(studentId, subject) {
     DB.results.push({ studentId, subject, classTest: ct, midTerm: mt, final: fn, total });
   }
 
+  saveDB();
   showToast('Result saved!', 'success');
   loadResults();
 }
@@ -1211,6 +1238,7 @@ function saveTeacher() {
   closeModal('addTeacherModal');
   document.getElementById('teacherForm').reset();
   document.getElementById('editTeacherId').value = '';
+  saveDB();
   renderTeachersTable();
 }
 
@@ -1291,6 +1319,7 @@ function saveFeeStructure() {
   if (idx !== -1) DB.feeStructures[idx] = data;
   else DB.feeStructures.push(data);
 
+  saveDB();
   closeModal('addFeeStructureModal');
   renderFeeStructures();
   showToast('Fee structure saved!', 'success');
@@ -1386,6 +1415,7 @@ function processPayment() {
   });
 
   DB.nextPaymentNum++;
+  saveDB();
   closeModal('collectPaymentModal');
   document.getElementById('paymentForm').reset();
   document.getElementById('payStudentInfo').style.display = 'none';
@@ -1486,6 +1516,7 @@ function saveNotice() {
   closeModal('addNoticeModal');
   document.getElementById('noticeForm').reset();
   document.getElementById('editNoticeId').value = '';
+  saveDB();
   renderNotices();
 }
 
@@ -1620,6 +1651,7 @@ function executeDelete() {
 
   closeModal('confirmModal');
   pendingDelete = null;
+  saveDB();
   showToast(`${capitalize(type)} deleted successfully.`, 'success');
 }
 
